@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import { api } from '../api';
 import { useTheme } from '../ThemeContext';
-import { formatDate, addDays } from '../utils/date';
+import { formatDate, addDays, daysBetween } from '../utils/date';
 import { formatCurrency } from '../utils/currency';
 import type {
   MonthlyTotal,
@@ -17,11 +17,31 @@ import DateRangeFilter, { type DateRange } from '../components/DateRangeFilter';
 import styles from './Dashboard.module.css';
 
 const COLORS = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#db2777'];
-const FORECAST_STEPS_DAYS = [30, 60, 90];
+const FORECAST_WEEKS = 13;
 
 function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function weeklyDatesBetween(start: string, end: string): string[] {
+  const dates: string[] = [];
+  let d = start;
+  while (d <= end) {
+    dates.push(d);
+    d = addDays(d, 7);
+  }
+  if (dates[dates.length - 1] !== end) dates.push(end);
+  return dates;
+}
+
+function balanceAtDate(series: { date: string; balance: number }[], date: string): number | null {
+  let result: number | null = null;
+  for (const p of series) {
+    if (p.date <= date) result = p.balance;
+    else break;
+  }
+  return result;
 }
 
 function pivotCategoryMonthly(rows: CategoryMonthlyTotal[]) {
@@ -57,6 +77,7 @@ export default function Dashboard() {
     start: null,
     series: [],
     checkpoints: [],
+    forecastRates: { total: 0, recurring: 0 },
   });
   const [byCategory, setByCategory] = useState<CategoryTotal[]>([]);
   const [compare, setCompare] = useState<CompareResponse | null>(null);
@@ -90,42 +111,74 @@ export default function Dashboard() {
       .catch(() => {});
   }, [month]);
 
-  const balanceDates = useMemo(() => balanceSeries.series.map((p) => p.date), [balanceSeries]);
-  const balanceValues = useMemo(() => balanceSeries.series.map((p) => p.balance), [balanceSeries]);
-  const checkpointValues = useMemo(
-    () =>
-      balanceSeries.series.map((p) => balanceSeries.checkpoints.find((c) => c.date === p.date)?.balance ?? null),
-    [balanceSeries]
-  );
-
-  const forecast = useMemo(() => {
+  // X-Achse auf Wochenebene resampelt (alle 7 Tage), plus exakte
+  // Checkpoint-Termine, damit deren Marker nicht ins Raster fallen.
+  const historyDates = useMemo(() => {
     const series = balanceSeries.series;
-    if (series.length < 2) return { dates: [] as string[], values: [] as number[] };
-    const first = series[0];
-    const last = series[series.length - 1];
-    const totalDays = (new Date(last.date).getTime() - new Date(first.date).getTime()) / 86400000;
-    if (totalDays <= 0) return { dates: [] as string[], values: [] as number[] };
-    const avgDailyChange = (last.balance - first.balance) / totalDays;
-    return {
-      dates: FORECAST_STEPS_DAYS.map((d) => addDays(last.date, d)),
-      values: FORECAST_STEPS_DAYS.map((d) => Math.round((last.balance + avgDailyChange * d) * 100) / 100),
-    };
+    if (series.length === 0) return [] as string[];
+    const first = series[0].date;
+    const last = series[series.length - 1].date;
+    const grid = weeklyDatesBetween(first, last);
+    const checkpointDates = balanceSeries.checkpoints.map((c) => c.date);
+    return Array.from(new Set([...grid, ...checkpointDates])).sort();
   }, [balanceSeries]);
 
-  const extendedBalanceDates = useMemo(() => [...balanceDates, ...forecast.dates], [balanceDates, forecast]);
-  const extendedBalanceValues = useMemo(
-    () => [...balanceValues, ...forecast.dates.map(() => null)],
-    [balanceValues, forecast]
+  const lastHistoryDate = historyDates[historyDates.length - 1];
+  const lastBalance = useMemo(
+    () => (lastHistoryDate ? balanceAtDate(balanceSeries.series, lastHistoryDate) : null),
+    [balanceSeries, lastHistoryDate]
+  );
+
+  const forecastDates = useMemo(() => {
+    if (!lastHistoryDate) return [] as string[];
+    return Array.from({ length: FORECAST_WEEKS }, (_, i) => addDays(lastHistoryDate, (i + 1) * 7));
+  }, [lastHistoryDate]);
+
+  const computedValues = useMemo(
+    () => historyDates.map((d) => balanceAtDate(balanceSeries.series, d)),
+    [historyDates, balanceSeries]
+  );
+  const checkpointValues = useMemo(
+    () => historyDates.map((d) => balanceSeries.checkpoints.find((c) => c.date === d)?.balance ?? null),
+    [historyDates, balanceSeries]
+  );
+
+  const projectFrom = (rate: number) =>
+    lastBalance == null || !lastHistoryDate
+      ? forecastDates.map(() => null)
+      : forecastDates.map((d) => Math.round((lastBalance + rate * daysBetween(lastHistoryDate, d)) * 100) / 100);
+
+  const forecastTotalValues = useMemo(
+    () => projectFrom(balanceSeries.forecastRates.total),
+    [forecastDates, lastBalance, lastHistoryDate, balanceSeries]
+  );
+  const forecastBaselineValues = useMemo(
+    () => projectFrom(balanceSeries.forecastRates.recurring),
+    [forecastDates, lastBalance, lastHistoryDate, balanceSeries]
+  );
+
+  const balanceCategories = useMemo(() => [...historyDates, ...forecastDates], [historyDates, forecastDates]);
+  const extendedComputedValues = useMemo(
+    () => [...computedValues, ...forecastDates.map(() => null)],
+    [computedValues, forecastDates]
   );
   const extendedCheckpointValues = useMemo(
-    () => [...checkpointValues, ...forecast.dates.map(() => null)],
-    [checkpointValues, forecast]
+    () => [...checkpointValues, ...forecastDates.map(() => null)],
+    [checkpointValues, forecastDates]
   );
-  const forecastSeriesValues = useMemo(() => {
-    if (balanceValues.length === 0) return forecast.values.map(() => null);
-    const padding = new Array(balanceValues.length - 1).fill(null);
-    return [...padding, balanceValues[balanceValues.length - 1], ...forecast.values];
-  }, [balanceValues, forecast]);
+  const padForecastSeries = (values: (number | null)[]) => {
+    if (historyDates.length === 0) return values;
+    const padding = new Array(historyDates.length - 1).fill(null);
+    return [...padding, lastBalance, ...values];
+  };
+  const extendedForecastTotalValues = useMemo(
+    () => padForecastSeries(forecastTotalValues),
+    [historyDates, lastBalance, forecastTotalValues]
+  );
+  const extendedForecastBaselineValues = useMemo(
+    () => padForecastSeries(forecastBaselineValues),
+    [historyDates, lastBalance, forecastBaselineValues]
+  );
 
   const expensePivot = useMemo(() => pivotCategoryMonthly(expenseMonthly), [expenseMonthly]);
   const incomePivot = useMemo(() => pivotCategoryMonthly(incomeMonthly), [incomeMonthly]);
@@ -160,21 +213,22 @@ export default function Dashboard() {
     ...baseOptions,
     chart: { ...baseOptions.chart, id: 'balance' },
     xaxis: {
-      categories: extendedBalanceDates,
+      categories: balanceCategories,
       labels: { formatter: (v: string) => formatDate(v) },
     },
     yaxis: { labels: { formatter: formatCurrency } },
-    tooltip: { ...baseOptions.tooltip, x: { formatter: (v: number) => formatDate(extendedBalanceDates[v - 1]) } },
-    colors: ['#2563eb', '#d97706', '#2563eb'],
-    stroke: { width: [2, 0, 2], dashArray: [0, 0, 6], curve: 'smooth' },
-    markers: { size: [0, 5, 0] },
+    tooltip: { ...baseOptions.tooltip, x: { formatter: (v: number) => formatDate(balanceCategories[v - 1]) } },
+    colors: ['#2563eb', '#d97706', '#2563eb', '#7c3aed'],
+    stroke: { width: [2, 0, 2, 2], dashArray: [0, 0, 6, 6], curve: 'smooth' },
+    markers: { size: [0, 5, 0, 0] },
     dataLabels: { enabled: false },
     legend: { labels: { colors: foreColor } },
   };
   const balanceChartSeries = [
-    { name: 'Berechnet', type: 'line', data: extendedBalanceValues },
+    { name: 'Berechnet', type: 'line', data: extendedComputedValues },
     { name: 'Saldo', type: 'line', data: extendedCheckpointValues },
-    { name: 'Prognose', type: 'line', data: forecastSeriesValues },
+    { name: 'Forecast Insgesamt', type: 'line', data: extendedForecastTotalValues },
+    { name: 'Forecast Baseline', type: 'line', data: extendedForecastBaselineValues },
   ];
 
   const categoryOptions: ApexOptions = {
