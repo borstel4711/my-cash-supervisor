@@ -8,7 +8,12 @@ const emptyAnchor = { date: '', balance: '', type: 'checkpoint' as BalanceAnchor
 
 export default function Balance() {
   const [anchors, setAnchors] = useState<BalanceAnchor[]>([]);
-  const [series, setSeries] = useState<BalanceSeriesResponse>({ start: null, series: [], checkpoints: [] });
+  const [series, setSeries] = useState<BalanceSeriesResponse>({
+    start: null,
+    series: [],
+    checkpoints: [],
+    forecastRates: { total: 0, recurring: 0 },
+  });
   const [form, setForm] = useState(emptyAnchor);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState('');

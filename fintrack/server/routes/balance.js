@@ -55,11 +55,17 @@ router.get('/balance/series', (req, res) => {
     .prepare("SELECT * FROM balance_anchors WHERE type = 'start' ORDER BY date ASC LIMIT 1")
     .get();
   if (!start) {
-    return res.json({ start: null, series: [], checkpoints: [] });
+    return res.json({ start: null, series: [], checkpoints: [], forecastRates: { total: 0, recurring: 0 } });
   }
 
   const transactions = db
-    .prepare('SELECT date, amount FROM transactions WHERE date >= ? ORDER BY date ASC')
+    .prepare(
+      `SELECT t.date, t.amount, c.mode AS category_mode
+       FROM transactions t
+       LEFT JOIN categories c ON c.id = t.category_id
+       WHERE t.date >= ?
+       ORDER BY t.date ASC`
+    )
     .all(start.date);
 
   let running = start.balance;
@@ -94,7 +100,25 @@ router.get('/balance/series', (req, res) => {
       return { ...a, computed, diff: Math.round((a.balance - computed) * 100) / 100 };
     });
 
-  res.json({ start, series, checkpoints });
+  // Forecast-Raten basieren bewusst auf der vollen Historie (nicht auf dem
+  // from/to-Anzeigefilter), damit der Trend nicht von einer kurz gewählten
+  // Anzeigespanne verzerrt wird.
+  const lastDate = transactions.length ? transactions[transactions.length - 1].date : start.date;
+  const totalDays = Math.max(1, (new Date(lastDate) - new Date(start.date)) / 86400000);
+  const totalChange = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const recurringChange = transactions
+    .filter((t) => t.category_mode === 'recurring')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  res.json({
+    start,
+    series,
+    checkpoints,
+    forecastRates: {
+      total: totalChange / totalDays,
+      recurring: recurringChange / totalDays,
+    },
+  });
 });
 
 module.exports = router;

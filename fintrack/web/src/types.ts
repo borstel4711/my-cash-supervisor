@@ -69,6 +69,7 @@ export interface BalanceSeriesResponse {
   start: BalanceAnchor | null;
   series: { date: string; balance: number }[];
   checkpoints: Checkpoint[];
+  forecastRates: { total: number; recurring: number };
 }
 
 export interface MonthlyTotal {
