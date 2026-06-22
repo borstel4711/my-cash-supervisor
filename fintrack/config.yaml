@@ -1,4 +1,4 @@
-name: My Finance Tracker
+name: My Cash Supervisor
 version: "0.1.6"
 slug: fintrack
 description: Einnahmen-/Ausgaben-Überwachung mit CSV-Import
@@ -22,6 +22,6 @@ ingress: true
 # bashio::addon.ingress_port aus.
 ingress_port: 0
 panel_icon: mdi:cash-multiple
-panel_title: Finance
+panel_title: My Cash Supervisor
 map:
   - data:rw
