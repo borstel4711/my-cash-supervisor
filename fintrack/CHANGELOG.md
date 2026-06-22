@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.7
+
+- Importprofile lassen sich jetzt im UI bearbeiten (nicht mehr nur anlegen/
+  löschen); Formular wechselt per "bearbeiten"/"Abbrechen" zwischen Anlegen-
+  und Bearbeiten-Modus, analog zu den Kategorien.
+- Fehler behoben: Wertstellungsdatum blieb bei Buchungen, die bereits vor der
+  Profil-Korrektur (siehe 0.1.5) importiert wurden, dauerhaft leer, weil ein
+  erneuter Import derselben Datei per Dublettenerkennung übersprungen wurde,
+  ohne das Feld nachzutragen. Ein erneuter Import ergänzt die Wertstellung
+  jetzt nachträglich an bereits vorhandenen Buchungen, sofern sie dort noch
+  fehlt.
+
 ## 0.1.6
 
 - Buchungen: neue Filterleiste oberhalb der Tabelle (Datumsbereich per
