@@ -3,43 +3,97 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import type { Category, Transaction } from '../types';
 import { formatDate } from '../utils/date';
+import CategoryBadge from '../components/CategoryBadge';
+import DateRangeFilter from '../components/DateRangeFilter';
 import styles from './Transactions.module.css';
 
 export default function Transactions() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
+
+  const from = searchParams.get('from') ?? '';
+  const to = searchParams.get('to') ?? '';
+  const category = searchParams.get('category');
   const uncategorized = searchParams.get('uncategorized') === 'true';
+
+  const updateParams = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null || value === '') next.delete(key);
+      else next.set(key, value);
+    }
+    setSearchParams(next);
+  };
 
   const load = () => {
     const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
     if (uncategorized) params.set('uncategorized', 'true');
-    api.get<Transaction[]>(`/transactions?${params.toString()}`).then(setTransactions).catch(() => {});
+    else if (category) params.set('category', category);
+    return api
+      .get<Transaction[]>(`/transactions?${params.toString()}`)
+      .then(setTransactions)
+      .catch(() => {});
   };
 
   useEffect(() => {
-    load();
     api.get<Category[]>('/categories').then(setCategories).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uncategorized]);
+  }, [from, to, category, uncategorized]);
 
   const updateCategory = async (id: number, categoryId: string) => {
     await api.patch(`/transactions/${id}`, { category_id: categoryId ? Number(categoryId) : null });
-    load();
+    await load();
+    setEditingRowId(null);
   };
+
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
 
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
         <h2 className={styles.title}>Buchungen</h2>
-        <label className={styles.filterLabel}>
-          <input
-            type="checkbox"
-            checked={uncategorized}
-            onChange={(e) => setSearchParams(e.target.checked ? { uncategorized: 'true' } : {})}
-          />
-          nur nicht kategorisierte
-        </label>
+      </div>
+
+      <div className={`card ${styles.filterPane}`}>
+        <DateRangeFilter
+          value={{ from, to }}
+          onChange={(range) => updateParams({ from: range.from || null, to: range.to || null })}
+        />
+
+        <div className={styles.filterRow}>
+          <button
+            type="button"
+            className={`${styles.pill} ${!category && !uncategorized ? styles.pillActive : ''}`}
+            onClick={() => updateParams({ category: null, uncategorized: null })}
+          >
+            Alle
+          </button>
+          <button
+            type="button"
+            className={`${styles.pill} ${uncategorized ? styles.pillActive : ''}`}
+            onClick={() => updateParams({ category: null, uncategorized: 'true' })}
+          >
+            Nicht kategorisiert
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`${styles.pill} ${category === String(c.id) ? styles.pillActive : ''}`}
+              onClick={() => updateParams({ category: String(c.id), uncategorized: null })}
+            >
+              <CategoryBadge category={c} />
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={`cardFlush ${styles.tableWrap}`}>
@@ -65,18 +119,32 @@ export default function Transactions() {
                   {tx.amount.toFixed(2)} €
                 </td>
                 <td>
-                  <select
-                    className="input inputSmall"
-                    value={tx.category_id ?? ''}
-                    onChange={(e) => updateCategory(tx.id, e.target.value)}
-                  >
-                    <option value="">–</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  {editingRowId === tx.id ? (
+                    <select
+                      className="input inputSmall"
+                      autoFocus
+                      defaultValue={tx.category_id ?? ''}
+                      onBlur={() => setEditingRowId(null)}
+                      onChange={(e) => updateCategory(tx.id, e.target.value)}
+                    >
+                      <option value="">–</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className={styles.categoryCell}
+                      onClick={() => setEditingRowId(tx.id)}
+                    >
+                      <CategoryBadge
+                        category={tx.category_id ? categoryById.get(tx.category_id) : null}
+                        fallback="Nicht kategorisiert"
+                      />
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

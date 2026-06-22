@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.6
+
+- Buchungen: neue Filterleiste oberhalb der Tabelle (Datumsbereich per
+  Schnellauswahl-Pills oder manuellem Datumsfeld, plus Kategorie-Pills inkl.
+  Farbe/Icon je Kategorie); beide Filter wirken kombiniert (UND). Die
+  bisherige Checkbox "nur nicht kategorisierte" ist jetzt einer der
+  Kategorie-Pills.
+- Buchungen: die Kategorie-Spalte zeigt pro Zeile jetzt ein farbiges
+  Icon-Badge statt nur des Namens; ein Klick darauf blendet weiterhin das
+  Dropdown zum Ändern ein.
+- Übersicht: die Monatsbilanz lässt sich jetzt über dieselbe
+  Datumsbereichs-Filterleiste wie auf der Buchungen-Seite einschränken.
+- Ingress-Port wird jetzt dynamisch vom Supervisor zugewiesen
+  (`ingress_port: 0`) statt fix auf 8099 zu bestehen; behebt Konflikte, wenn
+  Port 8099 bereits von einem anderen Add-on belegt ist. Die bisherige
+  `port`-Konfigurationsoption entfällt, da sie ohnehin nie einen echten
+  Port-Konflikt vermeiden konnte (kein Host-Port-Mapping für dieses
+  Ingress-only-Add-on).
+
 ## 0.1.5
 
 - Kategorien sind jetzt direkt im UI bearbeitbar (nicht mehr nur anlegen/

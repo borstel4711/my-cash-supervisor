@@ -1,0 +1,32 @@
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.pill:hover {
+  color: var(--text);
+  border-color: var(--accent2);
+}
+
+.pillActive {
+  background: var(--accent2) !important;
+  color: #fff !important;
+  border-color: var(--accent2) !important;
+  font-weight: 600;
+}
+
+.sep {
+  color: var(--text-muted);
+}

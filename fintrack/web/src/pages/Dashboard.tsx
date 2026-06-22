@@ -5,6 +5,7 @@ import { api } from '../api';
 import { useTheme } from '../ThemeContext';
 import { formatDate } from '../utils/date';
 import type { MonthlyTotal, BalanceSeriesResponse, CategoryTotal, CompareResponse, Transaction } from '../types';
+import DateRangeFilter, { type DateRange } from '../components/DateRangeFilter';
 import styles from './Dashboard.module.css';
 
 const COLORS = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#db2777'];
@@ -25,10 +26,17 @@ export default function Dashboard() {
   const [byCategory, setByCategory] = useState<CategoryTotal[]>([]);
   const [compare, setCompare] = useState<CompareResponse | null>(null);
   const [uncategorizedCount, setUncategorizedCount] = useState(0);
+  const [range, setRange] = useState<DateRange>({ from: '', to: '' });
   const month = currentMonth();
 
   useEffect(() => {
-    api.get<MonthlyTotal[]>('/reports/monthly').then(setMonthly).catch(() => {});
+    const params = new URLSearchParams();
+    if (range.from) params.set('from', range.from);
+    if (range.to) params.set('to', range.to);
+    api.get<MonthlyTotal[]>(`/reports/monthly?${params.toString()}`).then(setMonthly).catch(() => {});
+  }, [range]);
+
+  useEffect(() => {
     api.get<BalanceSeriesResponse>('/balance/series').then(setBalanceSeries).catch(() => {});
     api.get<CategoryTotal[]>(`/reports/by-category?month=${month}`).then(setByCategory).catch(() => {});
     api.get<CompareResponse>(`/reports/compare?month=${month}`).then(setCompare).catch(() => {});
@@ -102,6 +110,10 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
+      <div className={`card ${styles.filterPane}`}>
+        <DateRangeFilter value={range} onChange={setRange} />
+      </div>
+
       <section>
         <h2 className={styles.sectionTitle}>Monatsbilanz</h2>
         <div className={`card ${styles.chartCard}`}>
