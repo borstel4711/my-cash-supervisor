@@ -45,6 +45,7 @@ export default function Transactions() {
           <thead className="bg-slate-100 text-left">
             <tr>
               <th className="p-2">Datum</th>
+              <th className="p-2">Wertstellung</th>
               <th className="p-2">Empfänger</th>
               <th className="p-2">Zweck</th>
               <th className="p-2 text-right">Betrag</th>
@@ -55,6 +56,7 @@ export default function Transactions() {
             {transactions.map((tx) => (
               <tr key={tx.id} className="border-t">
                 <td className="p-2 whitespace-nowrap">{tx.date}</td>
+                <td className="p-2 whitespace-nowrap text-slate-500">{tx.value_date ?? '–'}</td>
                 <td className="p-2">{tx.counterparty}</td>
                 <td className="p-2 text-slate-500">{tx.purpose}</td>
                 <td className={`p-2 text-right ${tx.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>

@@ -33,8 +33,8 @@ router.post('/import', upload.single('file'), (req, res) => {
 
   const insertTx = db.prepare(`
     INSERT INTO transactions
-      (date, amount, type, counterparty, purpose, category_id, category_src, source_file, import_batch, hash)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (date, value_date, amount, type, counterparty, purpose, category_id, category_src, source_file, import_batch, hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const existsStmt = db.prepare('SELECT 1 FROM transactions WHERE hash = ?');
 
@@ -50,6 +50,7 @@ router.post('/import', upload.single('file'), (req, res) => {
       const { category_id, category_src } = categorize(row);
       insertTx.run(
         row.date,
+        row.value_date,
         row.amount,
         row.type,
         row.counterparty,

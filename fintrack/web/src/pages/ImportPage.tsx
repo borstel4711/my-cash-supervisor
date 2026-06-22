@@ -12,6 +12,7 @@ const emptyProfile: ProfileForm = {
   decimal_comma: 1,
   skip_rows: 0,
   col_date: '',
+  col_value_date: '',
   col_amount: '',
   col_debit: '',
   col_credit: '',
@@ -141,10 +142,15 @@ export default function ImportPage() {
               onChange={(v) => setNewProfile({ ...newProfile, skip_rows: Number(v) })}
             />
             <Field
-              label="Spalte Datum"
+              label="Spalte Datum (Buchung)"
               value={newProfile.col_date}
               onChange={(v) => setNewProfile({ ...newProfile, col_date: v })}
               required
+            />
+            <Field
+              label="Spalte Wertstellungsdatum"
+              value={newProfile.col_value_date ?? ''}
+              onChange={(v) => setNewProfile({ ...newProfile, col_value_date: v })}
             />
             <Field
               label="Spalte Betrag"

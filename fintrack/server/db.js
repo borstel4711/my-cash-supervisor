@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS import_profiles (
   decimal_comma    INTEGER NOT NULL DEFAULT 1,
   skip_rows        INTEGER NOT NULL DEFAULT 0,
   col_date         TEXT NOT NULL,
+  col_value_date   TEXT,
   col_amount       TEXT,
   col_debit        TEXT,
   col_credit       TEXT,
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS import_batches (
 CREATE TABLE IF NOT EXISTS transactions (
   id           INTEGER PRIMARY KEY,
   date         TEXT NOT NULL,
+  value_date   TEXT,
   amount       REAL NOT NULL,
   type         TEXT NOT NULL,
   counterparty TEXT,
@@ -88,5 +90,14 @@ CREATE TABLE IF NOT EXISTS balance_anchors (
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);
 `);
+
+function addColumnIfMissing(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+addColumnIfMissing('transactions', 'value_date', 'TEXT');
+addColumnIfMissing('import_profiles', 'col_value_date', 'TEXT');
 
 module.exports = db;

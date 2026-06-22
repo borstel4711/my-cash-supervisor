@@ -36,6 +36,9 @@ function hashRow({ date, amount, counterparty, purpose }) {
 
 function normalizeRow(rawRow, profile) {
   const date = parseDate(rawRow[profile.col_date], profile.date_format);
+  const valueDate = profile.col_value_date
+    ? parseDate(rawRow[profile.col_value_date], profile.date_format)
+    : null;
 
   let amount = null;
   if (profile.col_amount) {
@@ -60,6 +63,7 @@ function normalizeRow(rawRow, profile) {
 
   return {
     date,
+    value_date: valueDate,
     amount,
     type: amount >= 0 ? 'in' : 'out',
     counterparty,

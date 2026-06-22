@@ -16,8 +16,8 @@ router.post('/profiles', (req, res) => {
     .prepare(
       `INSERT INTO import_profiles
         (name, delimiter, encoding, date_format, decimal_comma, skip_rows,
-         col_date, col_amount, col_debit, col_credit, col_counterparty, col_purpose, col_balance)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         col_date, col_value_date, col_amount, col_debit, col_credit, col_counterparty, col_purpose, col_balance)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       p.name,
@@ -27,6 +27,7 @@ router.post('/profiles', (req, res) => {
       p.decimal_comma ?? 1,
       p.skip_rows ?? 0,
       p.col_date,
+      p.col_value_date || null,
       p.col_amount || null,
       p.col_debit || null,
       p.col_credit || null,
@@ -44,7 +45,7 @@ router.patch('/profiles/:id', (req, res) => {
   db.prepare(
     `UPDATE import_profiles SET
        name = ?, delimiter = ?, encoding = ?, date_format = ?, decimal_comma = ?, skip_rows = ?,
-       col_date = ?, col_amount = ?, col_debit = ?, col_credit = ?, col_counterparty = ?, col_purpose = ?, col_balance = ?
+       col_date = ?, col_value_date = ?, col_amount = ?, col_debit = ?, col_credit = ?, col_counterparty = ?, col_purpose = ?, col_balance = ?
      WHERE id = ?`
   ).run(
     merged.name,
@@ -54,6 +55,7 @@ router.patch('/profiles/:id', (req, res) => {
     merged.decimal_comma,
     merged.skip_rows,
     merged.col_date,
+    merged.col_value_date,
     merged.col_amount,
     merged.col_debit,
     merged.col_credit,

@@ -25,6 +25,7 @@ export interface ImportProfile {
   decimal_comma: number;
   skip_rows: number;
   col_date: string;
+  col_value_date: string | null;
   col_amount: string | null;
   col_debit: string | null;
   col_credit: string | null;
@@ -36,6 +37,7 @@ export interface ImportProfile {
 export interface Transaction {
   id: number;
   date: string;
+  value_date: string | null;
   amount: number;
   type: 'in' | 'out';
   counterparty: string | null;
