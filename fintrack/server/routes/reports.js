@@ -37,30 +37,38 @@ router.get('/reports/monthly', (req, res) => {
   res.json(monthlyTotals(req.query.from, req.query.to));
 });
 
-router.get('/reports/by-category', (req, res) => {
-  const month = req.query.month;
-  if (!month) return res.status(400).json({ error: 'month required (YYYY-MM)' });
+function byCategoryTotals(from, to) {
+  let query = `
+    SELECT c.id AS category_id, c.name, c.color,
+           SUM(-t.amount) AS total
+    FROM transactions t
+    LEFT JOIN categories c ON c.id = t.category_id
+    WHERE t.amount < 0
+  `;
+  const params = [];
+  if (from) {
+    query += ' AND t.date >= ?';
+    params.push(from);
+  }
+  if (to) {
+    query += ' AND t.date <= ?';
+    params.push(to);
+  }
+  query += ' GROUP BY t.category_id ORDER BY total DESC';
 
-  const rows = db
-    .prepare(
-      `SELECT c.id AS category_id, c.name, c.color,
-              SUM(-t.amount) AS total
-       FROM transactions t
-       LEFT JOIN categories c ON c.id = t.category_id
-       WHERE substr(t.date, 1, 7) = ? AND t.amount < 0
-       GROUP BY t.category_id
-       ORDER BY total DESC`
-    )
-    .all(month);
-
-  res.json(
-    rows.map((r) => ({
+  return db
+    .prepare(query)
+    .all(...params)
+    .map((r) => ({
       category_id: r.category_id,
       name: r.name || 'Nicht kategorisiert',
       color: r.color,
       total: r.total || 0,
-    }))
-  );
+    }));
+}
+
+router.get('/reports/by-category', (req, res) => {
+  res.json(byCategoryTotals(req.query.from, req.query.to));
 });
 
 function categoryMonthlyTotals(type, from, to) {

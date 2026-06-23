@@ -80,6 +80,7 @@ export default function Dashboard() {
     forecastRates: { total: 0, recurring: 0 },
   });
   const [byCategory, setByCategory] = useState<CategoryTotal[]>([]);
+  const [byCategoryAllTime, setByCategoryAllTime] = useState<CategoryTotal[]>([]);
   const [compare, setCompare] = useState<CompareResponse | null>(null);
   const [uncategorizedCount, setUncategorizedCount] = useState(0);
   const [range, setRange] = useState<DateRange>({ from: '', to: '' });
@@ -99,11 +100,15 @@ export default function Dashboard() {
       .get<CategoryMonthlyTotal[]>(`/reports/by-category-monthly?type=income&${qs}`)
       .then(setIncomeMonthly)
       .catch(() => {});
+    api.get<CategoryTotal[]>(`/reports/by-category?${qs}`).then(setByCategory).catch(() => {});
   }, [range]);
 
   useEffect(() => {
+    api.get<CategoryTotal[]>('/reports/by-category').then(setByCategoryAllTime).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     api.get<BalanceSeriesResponse>('/balance/series').then(setBalanceSeries).catch(() => {});
-    api.get<CategoryTotal[]>(`/reports/by-category?month=${month}`).then(setByCategory).catch(() => {});
     api.get<CompareResponse>(`/reports/compare?month=${month}`).then(setCompare).catch(() => {});
     api
       .get<Transaction[]>('/transactions?uncategorized=true')
@@ -231,15 +236,36 @@ export default function Dashboard() {
     { name: 'Forecast Baseline', type: 'line', data: extendedForecastBaselineValues },
   ];
 
+  const categoryDataLabels: ApexOptions['dataLabels'] = {
+    enabled: true,
+    formatter: (val: number) => `${val.toFixed(1)} %`,
+  };
+  const categoryTooltip: ApexOptions['tooltip'] = {
+    theme: tooltipTheme,
+    y: { formatter: (val: number) => formatCurrency(val) },
+  };
+
   const categoryOptions: ApexOptions = {
     ...baseOptions,
     chart: { ...baseOptions.chart, id: 'by-category', type: 'donut' },
     labels: byCategory.map((c) => c.name),
     colors: byCategory.map((c, i) => c.color || COLORS[i % COLORS.length]),
     legend: { labels: { colors: foreColor }, position: 'bottom' },
-    dataLabels: { enabled: false },
+    dataLabels: categoryDataLabels,
+    tooltip: categoryTooltip,
   };
   const categorySeries = byCategory.map((c) => c.total);
+
+  const categoryAllTimeOptions: ApexOptions = {
+    ...baseOptions,
+    chart: { ...baseOptions.chart, id: 'by-category-all-time', type: 'donut' },
+    labels: byCategoryAllTime.map((c) => c.name),
+    colors: byCategoryAllTime.map((c, i) => c.color || COLORS[i % COLORS.length]),
+    legend: { labels: { colors: foreColor }, position: 'bottom' },
+    dataLabels: categoryDataLabels,
+    tooltip: categoryTooltip,
+  };
+  const categoryAllTimeSeries = byCategoryAllTime.map((c) => c.total);
 
   const expenseByCategoryMonthlyOptions: ApexOptions = {
     ...baseOptions,
@@ -314,11 +340,18 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div className={styles.grid2}>
+      <div className={styles.statsGrid}>
         <section>
-          <h2 className={styles.sectionTitle}>Ausgaben nach Kategorie ({month})</h2>
+          <h2 className={styles.sectionTitle}>Ausgaben nach Kategorie (gefiltert)</h2>
           <div className={`card ${styles.chartCardSmall}`}>
             <Chart options={categoryOptions} series={categorySeries} type="donut" height="100%" />
+          </div>
+        </section>
+
+        <section>
+          <h2 className={styles.sectionTitle}>Ausgaben nach Kategorie (alle Zeit)</h2>
+          <div className={`card ${styles.chartCardSmall}`}>
+            <Chart options={categoryAllTimeOptions} series={categoryAllTimeSeries} type="donut" height="100%" />
           </div>
         </section>
 

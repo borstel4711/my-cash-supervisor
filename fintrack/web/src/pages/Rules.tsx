@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import type { Category, Rule } from '../types';
+import MdiIcon from '../components/MdiIcon';
 import styles from './Rules.module.css';
 
 const emptyRule = {
@@ -94,6 +95,7 @@ export default function Rules() {
           onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
         />
         <button type="submit" className="button buttonPrimary">
+          <MdiIcon name="plus" color="#ffffff" size={16} />
           Regel hinzufügen
         </button>
       </form>
@@ -104,8 +106,8 @@ export default function Rules() {
             <span>
               [{r.priority}] {r.match_field} {r.match_type} „{r.pattern}" → Kategorie #{r.category_id}
             </span>
-            <button className="deleteLink" onClick={() => remove(r.id)}>
-              löschen
+            <button className="iconButton" title="Löschen" aria-label="Löschen" onClick={() => remove(r.id)}>
+              <MdiIcon name="delete-outline" variant="danger" />
             </button>
           </li>
         ))}

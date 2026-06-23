@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.10
+
+- Buchungen: Tabelle lässt sich jetzt per Klick auf eine Spaltenüberschrift
+  sortieren (auf-/absteigend, mit Pfeil-Indikator in der aktiven Spalte).
+- Buchungen: Kategorie-Icon steht jetzt ganz links in der Zelle, Farbpunkt
+  und Name folgen rechts davon.
+- UI: die Aktionen "bearbeiten"/"löschen"/"hinzufügen" bei Kategorien,
+  Regeln, Saldo-Ankern und Importprofilen sind jetzt mdi-Icon-Buttons statt
+  reiner Textlinks.
+- Kategorien: das Feld "Art" (fixed/variable/income/transfer) wurde wieder
+  entfernt — in der Praxis ungenutzt und durch keine Auswertung
+  konsumiert. Bestehende Datenbanken migrieren die Spalte automatisch weg.
+- Übersicht: "Ausgaben nach Kategorie" berücksichtigt jetzt den aktuellen
+  Datumsfilter der Seite statt fest auf den aktuellen Kalendermonat zu
+  zeigen; daneben gibt es jetzt zusätzlich eine ungefilterte "alle
+  Zeit"-Variante. Beide Donut-Charts zeigen den Anteil je Kategorie jetzt
+  als Prozentangabe und formatieren die Tooltip-Werte korrekt als €-Betrag
+  mit zwei Dezimalstellen.
+
 ## 0.1.9
 
 - Übersicht: Y-Achsen von Monatsbilanz und Kontostandsverlauf zeigen jetzt

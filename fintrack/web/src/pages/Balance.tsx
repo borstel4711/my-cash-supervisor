@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import type { BalanceAnchor, BalanceSeriesResponse } from '../types';
 import { formatDate } from '../utils/date';
+import MdiIcon from '../components/MdiIcon';
 import styles from './Balance.module.css';
 
 const emptyAnchor = { date: '', balance: '', type: 'checkpoint' as BalanceAnchor['type'], note: '' };
@@ -126,8 +127,8 @@ export default function Balance() {
                     {cp ? `${cp.diff.toFixed(2)} €` : '–'}
                   </td>
                   <td>
-                    <button className="link" onClick={() => startEdit(a)}>
-                      bearbeiten
+                    <button className="iconButton" title="Bearbeiten" aria-label="Bearbeiten" onClick={() => startEdit(a)}>
+                      <MdiIcon name="pencil-outline" variant="accent" />
                     </button>
                   </td>
                 </tr>

@@ -58,8 +58,7 @@ CREATE TABLE categories (
   id        INTEGER PRIMARY KEY,
   name      TEXT NOT NULL,
   parent_id INTEGER REFERENCES categories(id),
-  color     TEXT,                       -- Hex für Charts
-  kind      TEXT NOT NULL DEFAULT 'variable'  -- fixed | variable | income | transfer
+  color     TEXT                        -- Hex für Charts
 );
 
 CREATE TABLE rules (
@@ -179,7 +178,7 @@ und setzt `category_src = manual`.
 - Kategorie-Heatmap (Kategorie × Monat)
 - Top-N Einzelbuchungen, Kategorie-Drilldown
 - Abo-/Daueraufträge erkennen (regelmäßiger Empfänger + Betrag)
-- Fix vs. variabel (via `categories.kind`), einfacher Monatsend-Forecast
+- Einfacher Monatsend-Forecast
 - Anomalien (Buchung ≫ Kategorie-Schnitt)
 
 ---
@@ -204,7 +203,7 @@ POST /api/balance/anchors           { date, balance, type }
 GET  /api/balance/series?from&to    # berechneter Verlauf + Checkpoint-Diffs
 # Auswertungen
 GET  /api/reports/monthly?from&to
-GET  /api/reports/by-category?month
+GET  /api/reports/by-category?from&to
 GET  /api/reports/compare?month
 ```
 

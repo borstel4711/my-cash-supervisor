@@ -4,7 +4,6 @@ import type { Category } from '../types';
 import MdiIcon from '../components/MdiIcon';
 import styles from './Categories.module.css';
 
-const KINDS: Category['kind'][] = ['fixed', 'variable', 'income', 'transfer'];
 const MODES: Category['mode'][] = ['recurring', 'one_time'];
 const MODE_LABELS: Record<Category['mode'], string> = {
   recurring: 'Wiederkehrend',
@@ -13,7 +12,6 @@ const MODE_LABELS: Record<Category['mode'], string> = {
 
 const emptyForm = {
   name: '',
-  kind: 'variable' as Category['kind'],
   color: '#2563eb',
   icon: '',
   mode: 'recurring' as Category['mode'],
@@ -43,7 +41,7 @@ export default function Categories() {
 
   const startEdit = (c: Category) => {
     setEditingId(c.id);
-    setForm({ name: c.name, kind: c.kind, color: c.color ?? '#2563eb', icon: c.icon ?? '', mode: c.mode });
+    setForm({ name: c.name, color: c.color ?? '#2563eb', icon: c.icon ?? '', mode: c.mode });
   };
 
   const cancelEdit = () => {
@@ -70,17 +68,6 @@ export default function Categories() {
         />
         <select
           className="input"
-          value={form.kind}
-          onChange={(e) => setForm({ ...form, kind: e.target.value as Category['kind'] })}
-        >
-          {KINDS.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-        <select
-          className="input"
           value={form.mode}
           onChange={(e) => setForm({ ...form, mode: e.target.value as Category['mode'] })}
         >
@@ -101,6 +88,7 @@ export default function Categories() {
           <MdiIcon name={form.icon} color={form.color} />
         </span>
         <button type="submit" className="button buttonPrimary">
+          <MdiIcon name={editingId !== null ? 'content-save-outline' : 'plus'} color="#ffffff" size={16} />
           {editingId !== null ? 'Speichern' : 'Hinzufügen'}
         </button>
         {editingId !== null && (
@@ -116,14 +104,14 @@ export default function Categories() {
             <span className={styles.nameRow}>
               <span className={styles.colorDot} style={{ background: c.color ?? undefined }} />
               <MdiIcon name={c.icon} color={c.color} />
-              {c.name} <span className={styles.kind}>({c.kind} · {MODE_LABELS[c.mode]})</span>
+              {c.name} <span className={styles.meta}>({MODE_LABELS[c.mode]})</span>
             </span>
             <span className={styles.actions}>
-              <button className="link" onClick={() => startEdit(c)}>
-                bearbeiten
+              <button className="iconButton" title="Bearbeiten" aria-label="Bearbeiten" onClick={() => startEdit(c)}>
+                <MdiIcon name="pencil-outline" variant="accent" />
               </button>
-              <button className="deleteLink" onClick={() => remove(c.id)}>
-                löschen
+              <button className="iconButton" title="Löschen" aria-label="Löschen" onClick={() => remove(c.id)}>
+                <MdiIcon name="delete-outline" variant="danger" />
               </button>
             </span>
           </li>

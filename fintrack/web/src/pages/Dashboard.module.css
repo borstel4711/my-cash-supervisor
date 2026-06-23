@@ -32,15 +32,21 @@
   margin-top: 8px;
 }
 
-.grid2 {
+.statsGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 32px;
 }
 
 @media (min-width: 768px) {
-  .grid2 {
+  .statsGrid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1100px) {
+  .statsGrid {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 

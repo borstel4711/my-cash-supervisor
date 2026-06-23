@@ -3,7 +3,6 @@ export interface Category {
   name: string;
   parent_id: number | null;
   color: string | null;
-  kind: 'fixed' | 'variable' | 'income' | 'transfer';
   icon: string | null;
   mode: 'one_time' | 'recurring';
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import type { ImportProfile, ImportResult } from '../types';
+import MdiIcon from '../components/MdiIcon';
 import styles from './ImportPage.module.css';
 
 type ProfileForm = Omit<ImportProfile, 'id'>;
@@ -159,11 +160,21 @@ export default function ImportPage() {
                 </span>
               </span>
               <span className={styles.profileActions}>
-                <button className="link" onClick={() => startEditProfile(p)}>
-                  bearbeiten
+                <button
+                  className="iconButton"
+                  title="Bearbeiten"
+                  aria-label="Bearbeiten"
+                  onClick={() => startEditProfile(p)}
+                >
+                  <MdiIcon name="pencil-outline" variant="accent" />
                 </button>
-                <button className="deleteLink" onClick={() => removeProfile(p.id)}>
-                  löschen
+                <button
+                  className="iconButton"
+                  title="Löschen"
+                  aria-label="Löschen"
+                  onClick={() => removeProfile(p.id)}
+                >
+                  <MdiIcon name="delete-outline" variant="danger" />
                 </button>
               </span>
             </li>

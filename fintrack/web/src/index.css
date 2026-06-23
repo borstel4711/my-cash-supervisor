@@ -144,3 +144,15 @@ input, select { font: inherit; }
 
 .deleteLink { color: var(--red); }
 .deleteLink:hover { text-decoration: underline; }
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+}
+.iconButton:hover { background: var(--surface2); }

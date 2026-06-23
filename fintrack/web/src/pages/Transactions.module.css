@@ -79,6 +79,23 @@
   padding: 8px;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable:hover {
+  color: var(--text);
+}
+
+.sortIndicator {
+  display: inline-block;
+  width: 12px;
+  margin-left: 4px;
+  font-size: 10px;
+}
+
 .table tbody tr {
   border-top: 1px solid var(--border);
 }
