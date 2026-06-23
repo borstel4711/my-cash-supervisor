@@ -16,8 +16,7 @@ CREATE TABLE IF NOT EXISTS categories (
   id        INTEGER PRIMARY KEY,
   name      TEXT NOT NULL,
   parent_id INTEGER REFERENCES categories(id),
-  color     TEXT,
-  kind      TEXT NOT NULL DEFAULT 'variable'
+  color     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS import_profiles (
@@ -104,6 +103,15 @@ addColumnIfMissing('transactions', 'value_date', 'TEXT');
 addColumnIfMissing('import_profiles', 'col_value_date', 'TEXT');
 addColumnIfMissing('categories', 'icon', 'TEXT');
 addColumnIfMissing('categories', 'mode', "TEXT NOT NULL DEFAULT 'recurring'");
+
+function dropColumnIfExists(table, column) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (cols.some((c) => c.name === column)) {
+    log(`Migration: dropping column ${table}.${column}`);
+    db.exec(`ALTER TABLE ${table} DROP COLUMN ${column}`);
+  }
+}
+dropColumnIfExists('categories', 'kind');
 
 // Bestand-Installationen haben ihr "ING CSV"-Profil ggf. angelegt, bevor
 // col_value_date existierte (seedImportProfile legt ein Profil nur einmalig

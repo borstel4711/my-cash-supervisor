@@ -13,8 +13,8 @@ export default function CategoryBadge({ category, fallback = '–' }: CategoryBa
   }
   return (
     <span className={styles.badge}>
-      <span className={styles.dot} style={{ background: category.color ?? undefined }} />
       <MdiIcon name={category.icon} color={category.color} size={14} />
+      <span className={styles.dot} style={{ background: category.color ?? undefined }} />
       {category.name}
     </span>
   );

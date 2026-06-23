@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import type { Category, Transaction } from '../types';
@@ -7,11 +7,24 @@ import CategoryBadge from '../components/CategoryBadge';
 import DateRangeFilter from '../components/DateRangeFilter';
 import styles from './Transactions.module.css';
 
+type SortKey = 'date' | 'value_date' | 'counterparty' | 'purpose' | 'amount' | 'category';
+type SortDir = 'asc' | 'desc';
+
+const COLUMNS: { key: SortKey; label: string; amountRight?: boolean }[] = [
+  { key: 'date', label: 'Datum' },
+  { key: 'value_date', label: 'Wertstellung' },
+  { key: 'counterparty', label: 'Empfänger' },
+  { key: 'purpose', label: 'Zweck' },
+  { key: 'amount', label: 'Betrag', amountRight: true },
+  { key: 'category', label: 'Kategorie' },
+];
+
 export default function Transactions() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'date', dir: 'desc' });
 
   const from = searchParams.get('from') ?? '';
   const to = searchParams.get('to') ?? '';
@@ -55,6 +68,39 @@ export default function Transactions() {
   };
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) => (prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
+  };
+
+  const sortValue = (tx: Transaction, key: SortKey): string | number => {
+    switch (key) {
+      case 'amount':
+        return tx.amount;
+      case 'category':
+        return (tx.category_id ? categoryById.get(tx.category_id)?.name : null) ?? '';
+      case 'value_date':
+        return tx.value_date ?? '';
+      case 'counterparty':
+        return tx.counterparty ?? '';
+      case 'purpose':
+        return tx.purpose ?? '';
+      default:
+        return tx.date;
+    }
+  };
+
+  const sortedTransactions = useMemo(() => {
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...transactions].sort((a, b) => {
+      const av = sortValue(a, sort.key);
+      const bv = sortValue(b, sort.key);
+      if (av < bv) return -dir;
+      if (av > bv) return dir;
+      return 0;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, sort, categories]);
 
   return (
     <div className={styles.page}>
@@ -100,16 +146,22 @@ export default function Transactions() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Datum</th>
-              <th>Wertstellung</th>
-              <th>Empfänger</th>
-              <th>Zweck</th>
-              <th className={styles.amountRight}>Betrag</th>
-              <th>Kategorie</th>
+              {COLUMNS.map((col) => (
+                <th
+                  key={col.key}
+                  className={`${styles.sortable} ${col.amountRight ? styles.amountRight : ''}`}
+                  onClick={() => toggleSort(col.key)}
+                >
+                  {col.label}
+                  <span className={styles.sortIndicator}>
+                    {sort.key === col.key ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {transactions.map((tx) => (
+            {sortedTransactions.map((tx) => (
               <tr key={tx.id}>
                 <td className={styles.nowrap}>{formatDate(tx.date)}</td>
                 <td className={`${styles.nowrap} ${styles.muted}`}>{formatDate(tx.value_date)}</td>
