@@ -8,7 +8,10 @@
   6M-/12M-Trend als farbige mdi-Pfeile (Vergleich der jeweiligen
   Fenster-Hälfte, ±5 % Schwelle für "gleichbleibend").
 - Kategorien: neue Heatmap "Kategorie × Monat" für die letzten 12 Monate
-  (absolute Beträge, alle Kategorien) unterhalb der Übersichtstabelle.
+  unterhalb der Übersichtstabelle. Vorzeichenbehaftete Beträge, dark-mode-
+  feste Farbskala, die von einer neutralen Mitte aus in Richtung Rot
+  (Ausgaben) bzw. Grün (Einnahmen) ausschlägt; einzelne Kategorien lassen
+  sich über Klick-Pills oberhalb der Heatmap ausblenden.
 - Neuer Endpunkt `GET /api/reports/category-summary` liefert Summen, Trends
   und das Monatsraster pro Kategorie für die neue Übersicht.
 
