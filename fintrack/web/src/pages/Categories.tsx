@@ -5,6 +5,7 @@ import { api } from '../api';
 import { useTheme } from '../ThemeContext';
 import type { Category, CategorySummaryResponse } from '../types';
 import MdiIcon from '../components/MdiIcon';
+import CategoryBadge from '../components/CategoryBadge';
 import { formatCurrency } from '../utils/currency';
 import { formatMonth } from '../utils/date';
 import styles from './Categories.module.css';
@@ -121,6 +122,7 @@ export default function Categories() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [sort, setSort] = useState<{ key: SummarySortKey; dir: SortDir }>({ key: 'name', dir: 'asc' });
+  const [hiddenCategories, setHiddenCategories] = useState<Set<number>>(new Set());
 
   const load = () => api.get<Category[]>('/categories').then(setCategories).catch(() => {});
   const loadSummary = () =>
@@ -165,6 +167,15 @@ export default function Categories() {
     setSort((prev) => (prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
   };
 
+  const toggleCategoryVisibility = (id: number) => {
+    setHiddenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const sortedSummary = useMemo(() => {
     const dir = sort.dir === 'asc' ? 1 : -1;
     return [...summary.categories].sort((a, b) => {
@@ -176,21 +187,26 @@ export default function Categories() {
     });
   }, [summary, sort]);
 
+  const visibleSummaryCategories = useMemo(
+    () => summary.categories.filter((c) => !hiddenCategories.has(c.category_id)),
+    [summary, hiddenCategories]
+  );
+
   const heatmapSeries = useMemo(
     () =>
-      summary.categories.map((c) => ({
+      visibleSummaryCategories.map((c) => ({
         name: c.name,
         data: summary.months.map((m, i) => ({
           x: formatMonth(m),
           y: Math.round((c.monthly[i] ?? 0) * 100) / 100,
         })),
       })),
-    [summary]
+    [visibleSummaryCategories, summary.months]
   );
 
   const heatmapMaxAbs = useMemo(
-    () => summary.categories.reduce((max, c) => Math.max(max, ...c.monthly.map((v) => Math.abs(v)), 0), 0),
-    [summary]
+    () => visibleSummaryCategories.reduce((max, c) => Math.max(max, ...c.monthly.map((v) => Math.abs(v)), 0), 0),
+    [visibleSummaryCategories]
   );
 
   const foreColor = theme === 'dark' ? '#94a3b8' : '#6b7280';
@@ -262,6 +278,18 @@ export default function Categories() {
 
       <section>
         <h3 className={styles.sectionTitle}>Kategorie × Monat (letzte 12 Monate)</h3>
+        <div className={styles.filterRow}>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`${styles.pill} ${hiddenCategories.has(c.id) ? '' : styles.pillActive}`}
+              onClick={() => toggleCategoryVisibility(c.id)}
+            >
+              <CategoryBadge category={c} />
+            </button>
+          ))}
+        </div>
         <div className={`card ${styles.heatmapCard}`}>
           <Chart options={heatmapOptions} series={heatmapSeries} type="heatmap" height="100%" />
         </div>
