@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.16
+
+- added investments
+
 ## 0.1.15
 
 - Neue Seite "Einstellungen" (erreichbar über ein neues Zahnrad-Symbol in der
